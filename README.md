@@ -15,3 +15,13 @@ Dual arms handing over a "foam brick" object between one another before placing 
 ### Task 3
 
 Single arm fully opening a a slightly open cabinet door on a table.
+
+## Usage
+
+This project uses [uv](https://github.com/astral-sh/uv) for fast Python environment management and package installation.
+
+```sh
+uv sync
+uv venv
+uv run -m scripts.cube_stacking # e.g. cube stacking task
+```

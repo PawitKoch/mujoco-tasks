@@ -1,4 +1,4 @@
-from .planner import BasePlanner
-from .controller import BaseController
+from .planner import BasePlanner, LinearPlanner
+from .ik import LevenbergMarquardtIKSolver
 
-__all__ = ['BasePlanner', 'BaseController']
+__all__ = ['LevenbergMarquardtIKSolver', 'BasePlanner', 'LinearPlanner']
