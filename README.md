@@ -16,8 +16,17 @@ This project uses [uv](https://github.com/astral-sh/uv) for fast Python environm
 ```sh
 uv sync
 uv venv
-uv run -m scripts.cube_stacking # e.g. cube stacking task
+uv run -m tasks.cube_stacking # e.g. cube stacking task
 ```
+
+## Future Improvements
+
+* Better configuration management
+* Retry mechanism per primitive failure
+* Parallel execution of primitives in a sequence
+* Smarter domain randomization for objects given knowledge of arm reachability/workspace area
+* Better motion planners
+* Unit tests for planning/IK
 
 ## Developer Notes
 
@@ -27,4 +36,4 @@ To generate Python type stubs for MuJoCo (for autocompletion and type checking),
 uv run pybind11-stubgen mujoco -o typings
 ```
 
-This will create or update the typings/mujoco directory with .pyi stub files for the MuJoCo Python bindings.
+This will create or update the `typings` directory with .pyi stub files for the MuJoCo Python bindings.
