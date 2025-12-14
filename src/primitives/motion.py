@@ -1,6 +1,7 @@
 import numpy as np
 from loguru import logger
 
+from src.components import Robot
 from src.envs import SingleArmEnv
 from src.primitives import Primitive
 from src.utils import BasePlanner, LinearPlanner
@@ -14,13 +15,17 @@ class PlanAndExecuteTrajectory(Primitive):
     Useful for open-loop or planned Cartesian/end-effector motions.
     """
 
-    def __init__(self, env: SingleArmEnv, target_pose: np.ndarray, speed: float = 1.5, settle_time: float = 1.0):
+    def __init__(
+        self, name: str, env: SingleArmEnv, target_pose: np.ndarray, speed: float = 1.5, settle_time: float = 1.0
+    ):
+        super().__init__(name)
         self.env = env
+        self.arm = env.arm
         self.target_pose = target_pose
         self.speed = speed
         self.settle_time = settle_time
 
-        self.planner: BasePlanner = LinearPlanner(env.model, env.data, env.arm_joint_ids, env.ee_site_id)
+        self.planner: BasePlanner = LinearPlanner(env.model, env.data, env.arm)
         self.path: list[np.ndarray] = []
         self.current_idx: int = 0
         self.done: bool = False
@@ -32,7 +37,7 @@ class PlanAndExecuteTrajectory(Primitive):
         self.path = []
         self.current_idx = 0
 
-        start_q = self.env.data.qpos[self.env.arm_joint_ids].copy()
+        start_q = self.arm.qpos.copy()
         self.path = self.planner.plan(start_q, self.target_pose)
 
         if self.path is None:
@@ -40,17 +45,17 @@ class PlanAndExecuteTrajectory(Primitive):
             self.done = True
         else:
             logger.debug("Plan found with {} waypoints.", len(self.path))
-            self.commanded_q = self.env.data.qpos[self.env.arm_joint_ids].copy()
+            self.commanded_q = self.arm.qpos.copy()
 
-    def _settle(self, final_pose: np.ndarray) -> None:
+    def _settle(self, final_q: np.ndarray) -> None:
         if self.reached_goal_time is None:
             self.reached_goal_time = self.env.data.time
-            self.commanded_q = final_pose
+            self.commanded_q = final_q
 
         if self.env.data.time - self.reached_goal_time >= self.settle_time:
             self.done = True
 
-        self.env.data.ctrl[self.env.arm_ctrl_ids] = final_pose
+        self.arm.set_joint_positions(final_q)
 
     def step(self) -> None:
         if self.done or not self.path:
@@ -82,7 +87,7 @@ class PlanAndExecuteTrajectory(Primitive):
         else:
             self.commanded_q = target_q
 
-        self.env.data.ctrl[self.env.arm_ctrl_ids] = self.commanded_q
+        self.arm.set_joint_positions(self.commanded_q)
 
     def is_done(self) -> bool:
         return self.done

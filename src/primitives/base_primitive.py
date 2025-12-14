@@ -8,6 +8,8 @@ class Primitive(ABC):
     A primitive encapsulates a single, atomic robot action or behavior (e.g., move, grasp, open gripper).
     Subclasses must implement reset, step, and is_done.
     """
+    def __init__(self, name: str):
+        self.name = name
 
     @abstractmethod
     def reset(self) -> None:
@@ -32,7 +34,8 @@ class PrimitiveSequence(Primitive):
     Useful for composing complex behaviors from atomic actions.
     """
 
-    def __init__(self, primitives: list[Primitive]):
+    def __init__(self, name: str, primitives: list[Primitive]):
+        super().__init__(name)
         self.primitives: list[Primitive] = primitives
         self.current_prim_idx: int = 0
         self.done = False
@@ -43,7 +46,7 @@ class PrimitiveSequence(Primitive):
 
         # Only reset the FIRST primitive immediately
         if self.primitives:
-            logger.info(f"Starting Primitive 0: {self.primitives[0].__class__.__name__}")
+            logger.info(f"Starting Primitive 0: {self.primitives[0].name}")
             self.primitives[0].reset()
 
     def step(self) -> None:
@@ -62,7 +65,7 @@ class PrimitiveSequence(Primitive):
                 return result
 
             next_prim = self.primitives[self.current_prim_idx]
-            logger.info(f"Switching to Primitive {self.current_prim_idx}: {next_prim.__class__.__name__}")
+            logger.info(f"Switching to Primitive {self.current_prim_idx}: {next_prim.name}")
             next_prim.reset()
 
         return result

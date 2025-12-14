@@ -2,87 +2,28 @@
 
 import time
 from loguru import logger
-from dataclasses import dataclass
 import mujoco
 import mujoco.viewer
 import numpy as np
 import glfw
 
-from src.envs.single_arm_env import SingleArmEnv, SingleArmEnvConfig
+from src.envs import BaseEnvRunner, SingleArmEnv, SingleArmEnvConfig
 from src.primitives import PlanAndExecuteTrajectory, PrimitiveSequence, GripperAction
 
 
-@dataclass
-class CubeStackingEnvConfig(SingleArmEnvConfig):
-    target_cube_names: list[str]
-    """Names of the cubes to be stacked."""
-    target_cube_min_distance: float = 0.1
-    """Minimum distance between cubes on reset (meters)."""
-
-
-class CubeStackingEnvRunner:
+class CubeStackingEnvRunner(BaseEnvRunner):
     """
     Orchestrates the cube stacking task: environment reset, cube placement, target pose computation,
     primitive sequence creation, and main execution loop.
     """
 
     def __init__(self, env: SingleArmEnv, render_dt: float = 0.02):
-        self.env: SingleArmEnv = env
-        self.render_dt = render_dt
-        self.dt = self.env.model.opt.timestep
-
-        # Precompute cube body and joint addresses
-        self.cube_body_name2id = {
-            name: mujoco.mj_name2id(self.env.model, mujoco.mjtObj.mjOBJ_BODY, name)
-            for name in self.env.config.target_cube_names
-        }
-        self.cube_jnt_adrs = [
-            self.env.model.jnt_qposadr[self.env.model.body_jntadr[body_id]]
-            for body_id in self.cube_body_name2id.values()
-        ]
+        super().__init__(env, render_dt)
         self.primitive_seq: PrimitiveSequence | None = None
 
-    def _generate_random_xy_rz(self) -> np.ndarray:
-        """Sample a random (x, y, rz) within bounds."""
-        x = np.random.uniform(*self.env.config.target_x_bounds)
-        y = np.random.uniform(*self.env.config.target_y_bounds)
-        rz = np.random.uniform(*self.env.config.target_rz_bounds)
-        return np.array([x, y, rz])
-
-    def _sample_cube_positions(self) -> list[np.ndarray]:
-        """Sample non-overlapping positions for all cubes."""
-        min_dist = self.env.config.target_cube_min_distance
-        positions = []
-        for cube_name in self.env.config.target_cube_names:
-            max_attempts = 10
-            candidate = None
-            for _ in range(max_attempts):
-                candidate = self._generate_random_xy_rz()
-                min_ok = all(np.linalg.norm(candidate[:2] - np.array(p)[:2]) >= min_dist for p in positions)
-                if min_ok:
-                    break
-            else:
-                logger.warning(
-                    "Could not find valid position for %s after %d attempts, using last candidate.",
-                    cube_name,
-                    max_attempts,
-                )
-            positions.append(candidate)
-        return positions
-
-    def _place_cubes(self, positions: list[np.ndarray]) -> None:
-        """Set cube positions and orientations in the simulation state."""
-        for body_id, jnt_adr, candidate in zip(self.cube_body_name2id.values(), self.cube_jnt_adrs, positions):
-            pos = self.env.data.xpos[body_id].copy()
-            pos[0], pos[1] = candidate[0], candidate[1]  # Set x, y
-            quat = np.zeros(4)
-            mujoco.mju_axisAngle2Quat(quat, np.array([0, 0, 1]), candidate[2])  # Set rz
-            self.env.data.qpos[jnt_adr : jnt_adr + 3] = pos
-            self.env.data.qpos[jnt_adr + 3 : jnt_adr + 7] = quat
-
-    def _compute_pose(self, target_name: str) -> np.ndarray:
+    def _compute_target_pose(self, target_name: str) -> np.ndarray:
         """Compute the 6D target pose given a target cube name, with gripper pointing down."""
-        cube_body_id = self.cube_body_name2id[target_name]
+        cube_body_id = self.object_body_name2id[target_name]
         cube_pos = self.env.data.xpos[cube_body_id].copy()
         cube_mat = self.env.data.xmat[cube_body_id].reshape(3, 3)
 
@@ -91,34 +32,33 @@ class CubeStackingEnvRunner:
         target_mat[:, 0] = cube_mat[:, 0]  # X matches
         target_mat[:, 1] = -cube_mat[:, 1]  # Y inverted
         target_mat[:, 2] = -cube_mat[:, 2]  # Z inverted (Down)
-
         target_quat = np.zeros(4)
         mujoco.mju_mat2Quat(target_quat, target_mat.flatten())
 
-        # This should be above the cube
+        # This should be just above the cube
         target_xyz = cube_pos.copy()
         return np.concatenate([target_xyz, target_quat])
 
     def setup_episode(self) -> None:
         """Reset environment, place cubes, compute target pose, and create primitive sequence."""
         self.env.reset()
-        positions = self._sample_cube_positions()
-        self._place_cubes(positions)
+        self.randomise_object_positions()
         self.env.forward()
-        pregrasp_pose = self._compute_pose("red_cube")
+        pregrasp_pose = self._compute_target_pose("red_cube")
         grasp_pose = pregrasp_pose.copy()
         grasp_pose[2] -= 0.05  # Move down to grasp
-        place_pose = self._compute_pose("green_cube")
+        place_pose = self._compute_target_pose("green_cube")
         place_pose[2] += 0.05  # Move above to place
         self.primitive_seq = PrimitiveSequence(
-            [
-                PlanAndExecuteTrajectory(self.env, pregrasp_pose),
-                PlanAndExecuteTrajectory(self.env, grasp_pose),
-                GripperAction(self.env, cmd=255.0),
-                PlanAndExecuteTrajectory(self.env, pregrasp_pose),
-                PlanAndExecuteTrajectory(self.env, place_pose),
-                GripperAction(self.env, cmd=0.0),
-            ]
+            name="CubeStackingSequence",
+            primitives=[
+                PlanAndExecuteTrajectory(name="Pregrasp", env=self.env, target_pose=pregrasp_pose),
+                PlanAndExecuteTrajectory(name="Grasp", env=self.env, target_pose=grasp_pose),
+                GripperAction(name="OpenGripper", env=self.env, cmd=255.0),
+                PlanAndExecuteTrajectory(name="Lift", env=self.env, target_pose=pregrasp_pose),
+                PlanAndExecuteTrajectory(name="Place", env=self.env, target_pose=place_pose),
+                GripperAction(name="CloseGripper", env=self.env, cmd=0.0),
+            ],
         )
         self.primitive_seq.reset()
 
@@ -171,17 +111,17 @@ class CubeStackingEnvRunner:
 
 
 if __name__ == "__main__":
-    env_config = CubeStackingEnvConfig(
+    env_config = SingleArmEnvConfig(
         mjcf_path="models/mjcf/cube_stacking.xml",
-        target_x_bounds=(0, 0.3),
-        target_y_bounds=(-0.3, 0.3),
-        target_rz_bounds=(-np.pi, np.pi),
+        object_names=["red_cube", "green_cube"],
+        object_min_distance=0.1,
+        object_x_bounds=(0, 0.3),
+        object_y_bounds=(-0.3, 0.3),
+        object_rz_bounds=(0, np.pi / 2),
         arm_body_name="xarm7",
         gripper_body_name="xarm_gripper_base_link",
         gripper_act_name="gripper",
-        ee_site_name="link_tcp",
-        target_cube_names=["red_cube", "green_cube"],
-        target_cube_min_distance=0.1,
+        tcp_site_name="link_tcp",
     )
     env = SingleArmEnv(env_config)
 

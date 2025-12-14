@@ -1,18 +1,22 @@
 from abc import ABC, abstractmethod
 import numpy as np
 from loguru import logger
+import mujoco
 
+from src.components import Robot
 from src.utils.ik import LevenbergMarquardtIKSolver
 
 
 class BasePlanner(ABC):
     """Abstract base class for planners."""
 
-    def __init__(self, model, data, arm_joint_ids, ee_site_id):
+    def __init__(
+        self, model: mujoco.MjModel, data: mujoco.MjData, arm: Robot
+    ):
         self.model = model
         self.data = data
-        self.joint_ids = arm_joint_ids
-        self.ik_solver = LevenbergMarquardtIKSolver(model, data, ee_site_id, arm_joint_ids)
+        self.arm = arm
+        self.ik_solver = LevenbergMarquardtIKSolver(model, data, arm)
 
     @abstractmethod
     def plan(self, start_q: np.ndarray, target_pose_6d: np.ndarray) -> list[np.ndarray] | None:
@@ -23,10 +27,16 @@ class BasePlanner(ABC):
 class LinearPlanner(BasePlanner):
     """Linear interpolation planner using IK for endpoint."""
 
-    def __init__(self, model, data, arm_joint_ids, ee_site_id, step_size: float = 0.1):
-        super().__init__(model, data, arm_joint_ids, ee_site_id)
+    def __init__(
+        self,
+        model: mujoco.MjModel,
+        data: mujoco.MjData,
+        arm: Robot,
+        step_size: float = 0.1,
+    ):
+        super().__init__(model, data, arm)
         self.step_size = step_size
-        self.limits = self.model.jnt_range[arm_joint_ids]
+        self.jnt_limits = self.model.jnt_range[arm.joint_ids]
 
     def _unwrap_continuous_joints(self, start_q: np.ndarray, goal_q: np.ndarray) -> np.ndarray:
         """If a joint moves more than Pi, check if wrapping 2*Pi is valid and closer."""
@@ -36,7 +46,7 @@ class LinearPlanner(BasePlanner):
             if abs(diff) > np.pi:
                 # Try subtracting/adding 2*pi
                 candidate = new_goal[i] - 2 * np.pi if diff > 0 else new_goal[i] + 2 * np.pi
-                min_limit, max_limit = self.limits[i]
+                min_limit, max_limit = self.jnt_limits[i]
                 if min_limit <= candidate <= max_limit:
                     if abs(candidate - start_q[i]) < abs(diff):
                         new_goal[i] = candidate
