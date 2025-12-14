@@ -25,28 +25,28 @@
     <worldbody>
         <body name="hingecab" childclass="hingecabinet">
             <freejoint/>
-            <geom material="hinge_blue" size="0.2 0.15 0.02" pos="0 0 -0.1" type="box"/>
-            <geom material="hinge_blue" size="0.02 0.15 0.1" type="box"/>
-            <geom material="hinge_blue" pos="0.19 0 0" size="0.01 0.15 0.1" type="box"/>
-            <geom material="hinge_blue" pos="-0.19 0 0" size="0.01 0.15 0.1" type="box"/>
-            <geom material="hinge_blue" pos="-0.1 0 0.09" size="0.08 0.15 0.01" type="box"/>
-            <geom material="hinge_blue" pos="-0.1 0 -0.09" size="0.08 0.15 0.01" type="box"/>
-            <geom material="hinge_blue" pos="0.1 0 -0.09" size="0.08 0.15 0.01" type="box"/>
-            <geom material="hinge_blue" pos="0.1 0 0.09" size="0.08 0.15 0.01" type="box"/>
-            <geom material="hinge_blue" pos="-0.1 0.14 0" size="0.08 0.01 0.08" type="box"/>
-            <geom material="hinge_blue" pos="0.1 0.14 0" size="0.08 0.01 0.08" type="box"/>
+            <geom material="hinge_blue" size="0.2 0.15 0.15" pos="0 0 0.05" type="box"/>
+            <geom material="hinge_blue" pos="0 0 0.3" size="0.02 0.15 0.1" type="box"/>
+            <geom material="hinge_blue" pos="0.19 0 0.3" size="0.01 0.15 0.1" type="box"/>
+            <geom material="hinge_blue" pos="-0.19 0 0.3" size="0.01 0.15 0.1" type="box"/>
+            <geom material="hinge_blue" pos="-0.1 0 0.39" size="0.08 0.15 0.01" type="box"/>
+            <geom material="hinge_blue" pos="-0.1 0 0.21" size="0.08 0.15 0.01" type="box"/>
+            <geom material="hinge_blue" pos="0.1 0 0.21" size="0.08 0.15 0.01" type="box"/>
+            <geom material="hinge_blue" pos="0.1 0 0.39" size="0.08 0.15 0.01" type="box"/>
+            <geom material="hinge_blue" pos="-0.1 0.14 0.3" size="0.08 0.01 0.08" type="box"/>
+            <geom material="hinge_blue" pos="0.1 0.14 0.3" size="0.08 0.01 0.08" type="box"/>
 
-            <geom class="hinge_collision" size="0.2 0.15 0.02" pos="0 0 -0.1" type="box" mass="5."/>
-            <geom class="hinge_collision" size="0.02 0.15 0.1" type="box" mass=".3"/>
-            <geom class="hinge_collision" pos="0.19 0 0" size="0.01 0.15 0.1" type="box" mass=".2"/>
-            <geom class="hinge_collision" pos="-0.19 0 0" size="0.01 0.15 0.1" type="box" mass=".2"/>
-            <geom class="hinge_collision" pos="-0.1 0 0.09" size="0.08 0.15 0.01" type="box" mass=".2"/>
-            <geom class="hinge_collision" pos="-0.1 0 -0.09" size="0.08 0.15 0.01" type="box" mass=".2"/>
-            <geom class="hinge_collision" pos="0.1 0 -0.09" size="0.08 0.15 0.01" type="box" mass=".2"/>
-            <geom class="hinge_collision" pos="0.1 0 0.09" size="0.08 0.15 0.01" type="box" mass=".2"/>
-            <geom class="hinge_collision" pos="-0.1 0.14 0" size="0.08 0.01 0.08" type="box" mass=".2"/>
-            <geom class="hinge_collision" pos="0.1 0.14 0" size="0.08 0.01 0.08" type="box" mass=".2"/>
-            <body name="hingeleftdoor" pos="-0.19 -0.16 0">
+            <geom class="hinge_collision" size="0.2 0.15 0.15" pos="0 0 0.05" type="box" mass="5."/>
+            <geom class="hinge_collision" pos="0 0 0.3" size="0.02 0.15 0.1" type="box" mass=".3"/>
+            <geom class="hinge_collision" pos="0.19 0 0.3" size="0.01 0.15 0.1" type="box" mass=".2"/>
+            <geom class="hinge_collision" pos="-0.19 0 0.3" size="0.01 0.15 0.1" type="box" mass=".2"/>
+            <geom class="hinge_collision" pos="-0.1 0 0.39" size="0.08 0.15 0.01" type="box" mass=".2"/>
+            <geom class="hinge_collision" pos="-0.1 0 0.21" size="0.08 0.15 0.01" type="box" mass=".2"/>
+            <geom class="hinge_collision" pos="0.1 0 0.21" size="0.08 0.15 0.01" type="box" mass=".2"/>
+            <geom class="hinge_collision" pos="0.1 0 0.39" size="0.08 0.15 0.01" type="box" mass=".2"/>
+            <geom class="hinge_collision" pos="-0.1 0.14 0.3" size="0.08 0.01 0.08" type="box" mass=".2"/>
+            <geom class="hinge_collision" pos="0.1 0.14 0.3" size="0.08 0.01 0.08" type="box" mass=".2"/>
+            <body name="hingeleftdoor" pos="-0.19 -0.16 0.3">
                 <joint axis="0 0 1" name="leftdoorhinge" range="-1.57 0"/>
                 <geom material="hinge_metal" pos="0.151 -0.064 0" size="0.011 0.08" type="cylinder"/>
                 <geom material="hinge_metal" pos="0.151 -0.0305 0.057" euler="1.57 0 0" size="0.0095 0.0265 0.01" type="cylinder"/>
@@ -57,20 +57,20 @@
                 <geom class="hinge_collision" pos="0.151 -0.064 0" size="0.011 0.08" type="cylinder" mass=".1"/>
                 <geom class="hinge_collision" pos="0.151 -0.0305 0.057" euler="1.57 0 0" size="0.0095 0.0265 0.01" type="cylinder" mass=".02"/>
                 <geom class="hinge_collision" pos="0.151 -0.0305 -0.057" euler="1.57 0 0" size="0.0095 0.0265 0.01" type="cylinder" mass=".02"/>
-                <site type="sphere" name="leftdoor_site" pos="0.302 -0.128 0" size=".01" group="3" rgba="1 0 0 1"/>
+                <site type="sphere" name="leftdoor_site" pos="0.156 -0.064 0" size=".01" group="3" rgba="1 0 0 1"/>
             </body>
-            <body name="hingerightdoor" pos="0.19 -0.16 0">
+            <body name="hingerightdoor" pos="0.19 -0.16 0.3">
                 <joint axis="0 0 1" name="rightdoorhinge" range="0 1.57"/>
                 <geom material="hinge_blue" pos="-0.092 -0.0075 0" size="0.0965 0.015 0.1" type="box"/>
                 <geom material="hinge_metal" pos="-0.151 -0.064 0" size="0.011 0.08" type="cylinder"/>
-                <geom material="hinge_metal" pos="-0.151 -0.0305 -0.057" euler="1.57 0 0" size="0.0095 0.0265 0.01" type="cylinder"/>
                 <geom material="hinge_metal" pos="-0.151 -0.0305 0.057" euler="1.57 0 0" size="0.0095 0.0265 0.01" type="cylinder"/>
+                <geom material="hinge_metal" pos="-0.151 -0.0305 -0.057" euler="1.57 0 0" size="0.0095 0.0265 0.01" type="cylinder"/>
 
                 <geom class="hinge_collision" pos="-0.151 -0.064 0" size="0.011 0.08" type="cylinder" mass=".1"/>
-                <geom class="hinge_collision" pos="-0.151 -0.0305 -0.057" euler="1.57 0 0" size="0.0095 0.0265 0.01" type="cylinder" mass=".02"/>
                 <geom class="hinge_collision" pos="-0.151 -0.0305 0.057" euler="1.57 0 0" size="0.0095 0.0265 0.01" type="cylinder" mass=".02"/>
+                <geom class="hinge_collision" pos="-0.151 -0.0305 -0.057" euler="1.57 0 0" size="0.0095 0.0265 0.01" type="cylinder" mass=".02"/>
                 <geom class="hinge_collision" pos="-0.092 -0.0075 0" size="0.0965 0.015 0.1" type="box" mass=".2"/>
-                <site type="sphere" name="rightdoor_site" pos="-0.302 -0.128 0" size=".01" group="3" rgba="0 1 0 1"/>
+                <site type="sphere" name="rightdoor_site" pos="-0.156 -0.064 0" size=".01" group="3" rgba="0 1 0 1"/>
             </body>
         </body>
     </worldbody>

@@ -85,9 +85,9 @@ class DualArmHandoverEnvRunner(BaseEnvRunner):
         body_mat = self.env.data.xmat[body_id].reshape(3, 3)
 
         target_mat = np.zeros((3, 3))
-        target_mat[:, 0] = body_mat[:, 0]  # X matches
-        target_mat[:, 1] = -body_mat[:, 1]  # Y inverted
-        target_mat[:, 2] = -body_mat[:, 2]  # Z inverted (Down)
+        target_mat[:, 0] = body_mat[:, 1]  # Gripper X aligned with Object Y
+        target_mat[:, 1] = body_mat[:, 0]  # Gripper Y aligned with Object X
+        target_mat[:, 2] = -body_mat[:, 2]  # Gripper Z inverted (Down)
 
         quat = np.zeros(4)
         mujoco.mju_mat2Quat(quat, target_mat.flatten())
@@ -114,7 +114,7 @@ class DualArmHandoverEnvRunner(BaseEnvRunner):
         mat_giver = np.column_stack((x_giver, y_giver, z_giver))
 
         # Receiver: Fingers Horizontal (Closing Y = Side)
-        y_receiver = np.cross(z_receiver, np.array([0, 0, 1]))
+        y_receiver = np.cross(z_receiver, np.array([0, 0, -1]))
         x_receiver = np.cross(y_receiver, z_receiver)
         mat_receiver = np.column_stack((x_receiver, y_receiver, z_receiver))
 
@@ -132,7 +132,7 @@ class DualArmHandoverEnvRunner(BaseEnvRunner):
 
     def _calculate_episode_plan(self) -> EpisodePlan:
         """Centralizes all pose calculations for the episode."""
-        # A. Pick Poses
+        # Pick Poses
         base_pick = self._compute_target_pose("foam_brick")
         pick_poses = PickPoses(
             approach=base_pick.copy(),
@@ -142,7 +142,7 @@ class DualArmHandoverEnvRunner(BaseEnvRunner):
         pick_poses.grasp[2] -= 0.05
         pick_poses.lift[2] += 0.1
 
-        # B. Handover Poses
+        # Handover Poses
         h_giver, h_receiver = self._compute_handover_poses()
 
         # Calculate approach/retreat vectors based on orientation
@@ -163,7 +163,7 @@ class DualArmHandoverEnvRunner(BaseEnvRunner):
         handover_poses.receiver_pre[:3] -= 0.1 * z_axis_recv
         handover_poses.giver_retreat[:3] -= 0.1 * z_axis_giver
 
-        # C. Place Poses
+        # Place Poses
         base_place = self._compute_target_pose("red_bowl")
         pre_place = base_place.copy()
         pre_place[2] += 0.1  # Above bowl
@@ -259,7 +259,10 @@ class DualArmHandoverEnvRunner(BaseEnvRunner):
                         break
 
                 episodes += 1
-                logger.info("Episode {} finished", episodes)
+                if not self.primitive_seq.success:
+                    logger.error("Episode {} failed due to primitive error", episodes)
+                else:
+                    logger.success("Episode {} completed successfully!", episodes)
 
 
 if __name__ == "__main__":
@@ -279,6 +282,8 @@ if __name__ == "__main__":
         right_gripper_act_name="right_gripper",
         left_tcp_site_name="left_link_tcp",
         right_tcp_site_name="right_link_tcp",
+        left_arm_num_dofs=7,
+        right_arm_num_dofs=7,
     )
     env = DualArmEnv(env_config)
 

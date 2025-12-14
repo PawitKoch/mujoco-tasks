@@ -19,7 +19,7 @@ class SingleArmEnvConfig(BaseEnvConfig):
     tcp_site_name: str
     """Name of the end-effector TCP site in MJCF."""
     
-    arm_num_dofs: int = 7
+    arm_num_dofs: int
     """Number of degrees of freedom for the robot arm."""
 
 
@@ -41,7 +41,7 @@ class SingleArmEnv(BaseEnv):
     def reset(self):
         """Reset the environment to an initial state."""
         # If a keyframe named 'home' exists, use it; else, just reset data
-        key_id = mujoco.mj_name2id(self._model, mujoco.mjtObj.mjOBJ_KEY, "home")
+        key_id = self._model.key("home").id
         if key_id != -1:
             mujoco.mj_resetDataKeyframe(self._model, self._data, key_id)
         else:

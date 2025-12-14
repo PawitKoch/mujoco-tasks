@@ -8,13 +8,19 @@ Open-loop robot arm agent in MuJoCo that performs 3 distinct manipulation tasks 
 
 Single arm picking a cube and stacking it on top of another cube on a table.
 
+![Task 1](assets/task1.png)
+
 ### Task 2
 
 Dual arms handing over a "foam brick" object between one another before placing into an "enamel-coated metal bowl" on a table.
 
+![Task 2](assets/task2.png)
+
 ### Task 3
 
-Single arm fully opening a a slightly open cabinet door on a table.
+Single arm opening a a slightly open cabinet door on a table.
+
+![Task 3](assets/task3.png)
 
 ## Usage
 

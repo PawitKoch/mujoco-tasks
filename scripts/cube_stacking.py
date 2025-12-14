@@ -27,11 +27,10 @@ class CubeStackingEnvRunner(BaseEnvRunner):
         cube_pos = self.env.data.xpos[cube_body_id].copy()
         cube_mat = self.env.data.xmat[cube_body_id].reshape(3, 3)
 
-        # Construct target orientation: gripper Z down, X aligned
         target_mat = np.zeros((3, 3))
-        target_mat[:, 0] = cube_mat[:, 0]  # X matches
-        target_mat[:, 1] = -cube_mat[:, 1]  # Y inverted
-        target_mat[:, 2] = -cube_mat[:, 2]  # Z inverted (Down)
+        target_mat[:, 0] = cube_mat[:, 1]  # Gripper X aligned with cube Y
+        target_mat[:, 1] = cube_mat[:, 0]  # Gripper Y aligned with cube X
+        target_mat[:, 2] = -cube_mat[:, 2]  # Gripper Z inverted (Down)
         target_quat = np.zeros(4)
         mujoco.mju_mat2Quat(target_quat, target_mat.flatten())
 
@@ -55,10 +54,10 @@ class CubeStackingEnvRunner(BaseEnvRunner):
             primitives=[
                 GoToPose(name="Pregrasp", env=self.env, arm=arm, target_pose=pregrasp_pose),
                 GoToPose(name="Grasp", env=self.env, arm=arm, target_pose=grasp_pose),
-                GripperAction(name="OpenGripper", env=self.env, arm=arm, cmd=255.0),
+                GripperAction(name="CloseGripper", env=self.env, arm=arm, cmd=255.0),
                 GoToPose(name="Lift", env=self.env, arm=arm, target_pose=pregrasp_pose),
                 GoToPose(name="Place", env=self.env, arm=arm, target_pose=place_pose),
-                GripperAction(name="CloseGripper", env=self.env, arm=arm, cmd=0.0),
+                GripperAction(name="OpenGripper", env=self.env, arm=arm, cmd=0.0),
             ],
         )
         self.primitive_seq.reset()
@@ -108,7 +107,10 @@ class CubeStackingEnvRunner(BaseEnvRunner):
                         break
 
                 episodes += 1
-                logger.info("Episode {} finished", episodes)
+                if not self.primitive_seq.success:
+                    logger.error("Episode {} failed due to primitive error", episodes)
+                else:
+                    logger.success("Episode {} completed successfully!", episodes)
 
 
 if __name__ == "__main__":
@@ -124,6 +126,7 @@ if __name__ == "__main__":
         gripper_body_name="xarm_gripper_base_link",
         gripper_act_name="gripper",
         tcp_site_name="link_tcp",
+        arm_num_dofs=7,
     )
     env = SingleArmEnv(env_config)
 

@@ -34,7 +34,7 @@
     <geom name="floor" size="2 2 0.05" type="plane" material="groundplane" pos="0 0 -.75"/>
 
     <!-- Arm Base -->
-    <body name="xarm7" pos="-0.45 0 0">
+    <body name="xarm7" pos="-0.65 -0.25 0">
       <geom type="cylinder" size=".06 .06" pos="0 0 .06" rgba="1 1 1 1"/>
       <attach model="xarm7" prefix=""/>
     </body>

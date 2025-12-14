@@ -47,14 +47,23 @@ class LevenbergMarquardtIKSolver:
         return np.linalg.solve(product, gradient)
 
     def solve(
-        self, target_pose_6d: np.ndarray, max_iters: int = 100, pos_tol: float = 0.001, rot_tol: float = 0.01
+        self,
+        target_pose_6d: np.ndarray,
+        initial_q: np.ndarray | None = None,
+        max_iters: int = 100,
+        pos_tol: float = 0.001,
+        rot_tol: float = 0.01,
     ) -> np.ndarray | None:
         """
         Solves for absolute joint angles to reach a 6D pose.
         Restores simulation state after calculation.
         Returns: joint angles (np.ndarray) or None if failed.
         """
-        initial_q = self._data.qpos.copy()
+        full_qpos = self._data.qpos.copy()
+        if initial_q is not None:
+            if len(initial_q) != len(self._arm_joint_ids):
+                raise ValueError("Initial q length does not match number of arm joints.")
+            self._data.qpos[self._arm_joint_ids] = initial_q
 
         target_pos = target_pose_6d[:3]
         if len(target_pose_6d) == 6:
@@ -86,13 +95,15 @@ class LevenbergMarquardtIKSolver:
             neg_curr_quat = np.zeros(4)
             mujoco.mju_negQuat(neg_curr_quat, curr_quat)
             mujoco.mju_mulQuat(self._err_quat, aligned_target_quat, neg_curr_quat)
-            err_rot = self._err_quat[1:] * 2.0  # Vector part scaled
+            
+            # Convert quaternion error to rotation vector
+            err_rot = self._err_quat[1:] * 2.0  # for small angles, rotation vector ~ 2 * (x, y, z) of quaternion 
             error_6d = np.concatenate([err_pos, err_rot])
 
             if np.linalg.norm(err_pos) < pos_tol and np.linalg.norm(err_rot) < rot_tol:
                 success = True
                 solution_q = self.arm.qpos.copy()
-                logger.debug(f"IK converged in {i+1} iterations.")
+                logger.trace(f"IK converged in {i+1} iterations.")
                 break
 
             delta_q = self.compute_step(error_6d)
@@ -102,7 +113,7 @@ class LevenbergMarquardtIKSolver:
             logger.error("IK failed to converge after {} iterations.", max_iters)
 
         # Restore State
-        self._data.qpos[:] = initial_q
+        self._data.qpos[:] = full_qpos
         mujoco.mj_fwdPosition(self._model, self._data)
 
         return solution_q if success else None

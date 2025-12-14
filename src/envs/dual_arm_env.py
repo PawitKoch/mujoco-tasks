@@ -32,10 +32,10 @@ class DualArmEnvConfig(BaseEnvConfig):
     right_tcp_site_name: str
     """Name of the right arm TCP site in MJCF."""
 
-    left_arm_num_dofs: int = 7
+    left_arm_num_dofs: int
     """Number of degrees of freedom for the left robot arm."""
 
-    right_arm_num_dofs: int = 7
+    right_arm_num_dofs: int
     """Number of degrees of freedom for the right robot arm."""
 
 

@@ -20,12 +20,12 @@ class Robot:
 
         # Body & Site IDs
         self.all_body_ids = self.collect_subtree_body_ids(
-            model, mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, arm_body_name)
+            model, model.body(arm_body_name).id
         )
-        self.body_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, arm_body_name)
-        self.tcp_site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, tcp_site_name)
+        self.body_id = model.body(arm_body_name).id
+        self.tcp_site_id = model.site(tcp_site_name).id
         self.gripper_body_ids = self.collect_subtree_body_ids(
-            model, mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, gripper_body_name)
+            model, model.body(gripper_body_name).id
         )
 
         # Geom IDs (for collision checking, if needed)
@@ -53,7 +53,7 @@ class Robot:
             ],
             dtype=int,
         )
-        self.gripper_ctrl_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, gripper_act_name)
+        self.gripper_ctrl_id = model.actuator(gripper_act_name).id
 
     @property
     def qpos(self) -> np.ndarray:
