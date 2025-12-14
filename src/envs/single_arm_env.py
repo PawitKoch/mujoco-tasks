@@ -18,6 +18,9 @@ class SingleArmEnvConfig(BaseEnvConfig):
 
     tcp_site_name: str
     """Name of the end-effector TCP site in MJCF."""
+    
+    arm_num_dofs: int = 7
+    """Number of degrees of freedom for the robot arm."""
 
 
 class SingleArmEnv(BaseEnv):
@@ -32,6 +35,7 @@ class SingleArmEnv(BaseEnv):
             gripper_body_name=config.gripper_body_name,
             gripper_act_name=config.gripper_act_name,
             tcp_site_name=config.tcp_site_name,
+            arm_num_dofs=config.arm_num_dofs,
         )
 
     def reset(self):

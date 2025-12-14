@@ -13,24 +13,47 @@ class Robot:
         gripper_body_name: str,
         gripper_act_name: str,
         tcp_site_name: str,
+        arm_num_dofs: int = 7,
     ):
         self.model = model
         self.data = data
 
         # Body & Site IDs
+        self.all_body_ids = self.collect_subtree_body_ids(
+            model, mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, arm_body_name)
+        )
         self.body_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, arm_body_name)
-        self.gripper_body_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, gripper_body_name)
         self.tcp_site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, tcp_site_name)
+        self.gripper_body_ids = self.collect_subtree_body_ids(
+            model, mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, gripper_body_name)
+        )
+
+        # Geom IDs (for collision checking, if needed)
+        all_geom_ids = np.array([g for g in range(model.ngeom) if model.geom_bodyid[g] in self.all_body_ids], dtype=int)
+        gripper_geom_ids = np.array(
+            [g for g in range(model.ngeom) if model.geom_bodyid[g] in self.gripper_body_ids], dtype=int
+        )
+        self.arm_geom_ids = np.setdiff1d(all_geom_ids, gripper_geom_ids)
 
         # Joint Indices
-        all_joint_ids = self.collect_joint_ids(self.body_id)
-        gripper_joint_ids = self.collect_joint_ids(self.gripper_body_id)
-        self.joint_ids = np.setdiff1d(all_joint_ids, gripper_joint_ids)
+        chain_joint_ids = self.collect_joint_ids(self.body_id)
+        if len(chain_joint_ids) >= arm_num_dofs:
+            self.joint_ids = np.array(chain_joint_ids[:arm_num_dofs], dtype=int)
+        else:
+            # Fallback if something is weird, though unlikely
+            self.joint_ids = np.array(chain_joint_ids, dtype=int)
 
         # Actuator Indices
-        all_ctrl_ids = np.array([a for a in range(model.nu) if model.actuator_trnid[a, 0] in all_joint_ids], dtype=int)
+        self.ctrl_ids = np.array(
+            [
+                a
+                for a in range(model.nu)
+                if model.actuator_trnid[a, 0] in self.joint_ids
+                and model.actuator_trntype[a] == mujoco.mjtTrn.mjTRN_JOINT  # Only joint actuators
+            ],
+            dtype=int,
+        )
         self.gripper_ctrl_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, gripper_act_name)
-        self.ctrl_ids = np.setdiff1d(all_ctrl_ids, self.gripper_ctrl_id)
 
     @property
     def qpos(self) -> np.ndarray:
@@ -69,3 +92,16 @@ class Robot:
             if self.model.body_parentid[child_body_id] == body_id:
                 joint_ids.extend(self.collect_joint_ids(child_body_id))
         return np.array(joint_ids, dtype=int)
+
+    def collect_subtree_body_ids(self, model, root_body_id):
+        """Recursively collect the root body ID and all its descendants."""
+        body_ids = [root_body_id]
+
+        # Iterate over all bodies to find children of the current set
+        # (MuJoCo bodies are usually topological, so we can do this efficiently,
+        # but a simple recursive search is robust for initialization)
+        for i in range(model.nbody):
+            if model.body_parentid[i] == root_body_id:
+                body_ids.extend(self.collect_subtree_body_ids(model, i))
+
+        return body_ids

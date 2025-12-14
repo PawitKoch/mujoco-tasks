@@ -1,27 +1,9 @@
-from abc import ABC, abstractmethod
 import numpy as np
-from loguru import logger
 import mujoco
+from loguru import logger
 
 from src.components import Robot
-from src.utils.ik import LevenbergMarquardtIKSolver
-
-
-class BasePlanner(ABC):
-    """Abstract base class for planners."""
-
-    def __init__(
-        self, model: mujoco.MjModel, data: mujoco.MjData, arm: Robot
-    ):
-        self.model = model
-        self.data = data
-        self.arm = arm
-        self.ik_solver = LevenbergMarquardtIKSolver(model, data, arm)
-
-    @abstractmethod
-    def plan(self, start_q: np.ndarray, target_pose_6d: np.ndarray) -> list[np.ndarray] | None:
-        """Plan a path from start_q to target_pose_6d. Returns a list of joint waypoints or None on failure."""
-        pass
+from src.planners import BasePlanner
 
 
 class LinearPlanner(BasePlanner):
@@ -65,7 +47,7 @@ class LinearPlanner(BasePlanner):
     def plan(self, start_q: np.ndarray, target_pose_6d: np.ndarray) -> list[np.ndarray] | None:
         goal_q = self.ik_solver.solve(target_pose_6d)
         if goal_q is None:
-            logger.error("IK solver failed to find a solution.")
+            logger.error("LinearPlanner: IK solver failed to find a solution.")
             return None
         goal_q = self._unwrap_continuous_joints(start_q, goal_q)
         path = self._interpolate_path(start_q, goal_q)

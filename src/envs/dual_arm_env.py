@@ -15,10 +15,10 @@ class DualArmEnvConfig(BaseEnvConfig):
     """Name of the right arm robot body in MJCF."""
 
     left_gripper_body_name: str
-    """Name of the left gripper actuator in MJCF."""
+    """Name of the left gripper robot body in MJCF."""
 
     right_gripper_body_name: str
-    """Name of the right gripper actuator in MJCF."""
+    """Name of the right gripper robot body in MJCF."""
 
     left_gripper_act_name: str
     """Name of the left gripper actuator in MJCF."""
@@ -31,6 +31,12 @@ class DualArmEnvConfig(BaseEnvConfig):
 
     right_tcp_site_name: str
     """Name of the right arm TCP site in MJCF."""
+
+    left_arm_num_dofs: int = 7
+    """Number of degrees of freedom for the left robot arm."""
+
+    right_arm_num_dofs: int = 7
+    """Number of degrees of freedom for the right robot arm."""
 
 
 class DualArmEnv(BaseEnv):
@@ -46,6 +52,7 @@ class DualArmEnv(BaseEnv):
             config.left_gripper_body_name,
             config.left_gripper_act_name,
             config.left_tcp_site_name,
+            config.left_arm_num_dofs,
         )
         self.right_arm = Robot(
             self.model,
@@ -54,6 +61,7 @@ class DualArmEnv(BaseEnv):
             config.right_gripper_body_name,
             config.right_gripper_act_name,
             config.right_tcp_site_name,
+            config.right_arm_num_dofs,
         )
 
         # Use left arm home position for both arms
@@ -69,6 +77,6 @@ class DualArmEnv(BaseEnv):
         mujoco.mj_resetData(self._model, self._data)
         self.data.qpos[self.left_arm.joint_ids] = self.home_qpos
         self.data.qpos[self.right_arm.joint_ids] = self.home_qpos
-        self.data.ctrl[self.left_arm.joint_ids] = self.home_qpos
+        self.data.ctrl[self.left_arm.ctrl_ids] = self.home_qpos
         self.data.ctrl[self.right_arm.ctrl_ids] = self.home_qpos
         self.forward()

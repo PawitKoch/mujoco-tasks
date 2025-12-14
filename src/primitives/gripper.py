@@ -13,9 +13,9 @@ class GripperAction(Primitive):
     Useful for open-loop gripper actions in manipulation tasks.
     """
 
-    def __init__(self, name: str, env: SingleArmEnv, cmd: float, duration=0.5):
+    def __init__(self, name: str, env: SingleArmEnv, arm: Robot, cmd: float, duration=0.5):
         super().__init__(name)
-        self.arm = env.arm
+        self.arm = arm
         self.cmd = cmd  # 0 = closed, 255 = open (usually) depends on your gripper
         self.steps = int(duration / env.model.opt.timestep)
         self.cmd_range = np.linspace(self.arm.gripper_width, self.cmd, self.steps)

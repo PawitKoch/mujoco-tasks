@@ -1,10 +1,11 @@
 from .base_primitive import Primitive, PrimitiveSequence
-from .motion import PlanAndExecuteTrajectory
+from .motion import GoToPose, GoToJointPosition
 from .gripper import GripperAction
 
 __all__ = [
     "Primitive",
     "PrimitiveSequence",
-    "PlanAndExecuteTrajectory",
+    "GoToPose",
+    "GoToJointPosition",
     "GripperAction",
 ]

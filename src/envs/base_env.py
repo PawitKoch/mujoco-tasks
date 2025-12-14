@@ -14,8 +14,11 @@ class BaseEnvConfig:
     object_names: list[str]
     """Names of the objects in the environment."""
 
-    object_min_distance: float
-    """Minimum distance between object poses on reset (meters)."""
+    object_min_distance_x: float
+    """Minimum distance between object poses on the X axis."""
+
+    object_min_distance_y: float
+    """Minimum distance between object poses on the Y axis."""
 
     object_x_bounds: tuple[float, float]
     """Bounds for target placement in the X axis."""
@@ -34,7 +37,8 @@ class BaseEnv(ABC):
         self._data = mujoco.MjData(self._model)
 
         self.object_names = config.object_names
-        self.object_min_distance = config.object_min_distance
+        self.object_min_distance_x = config.object_min_distance_x
+        self.object_min_distance_y = config.object_min_distance_y
         self.object_x_bounds = config.object_x_bounds
         self.object_y_bounds = config.object_y_bounds
         self.object_rz_bounds = config.object_rz_bounds
@@ -99,19 +103,22 @@ class BaseEnvRunner(ABC):
 
     def randomise_object_positions(self) -> None:
         """Sample non-overlapping positions for all objects and place them."""
-        min_dist = self.env.object_min_distance
         positions = []
         for object_name in self.env.object_names:
-            max_attempts = 10
+            max_attempts = 100
             candidate = None
             for _ in range(max_attempts):
                 candidate = self._generate_random_xy_rz()
-                min_ok = all(np.linalg.norm(candidate[:2] - np.array(p)[:2]) >= min_dist for p in positions)
+                min_ok = all(
+                    abs(candidate[0] - p[0]) >= self.env.object_min_distance_x
+                    and abs(candidate[1] - p[1]) >= self.env.object_min_distance_y
+                    for p in positions
+                )
                 if min_ok:
                     break
             else:
                 logger.warning(
-                    "Could not find valid position for %s after %d attempts, using last candidate.",
+                    "Could not find valid position for {} after {} attempts, using last candidate.",
                     object_name,
                     max_attempts,
                 )

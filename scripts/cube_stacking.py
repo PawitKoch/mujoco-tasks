@@ -8,7 +8,7 @@ import numpy as np
 import glfw
 
 from src.envs import BaseEnvRunner, SingleArmEnv, SingleArmEnvConfig
-from src.primitives import PlanAndExecuteTrajectory, PrimitiveSequence, GripperAction
+from src.primitives import GoToPose, PrimitiveSequence, GripperAction
 
 
 class CubeStackingEnvRunner(BaseEnvRunner):
@@ -44,6 +44,7 @@ class CubeStackingEnvRunner(BaseEnvRunner):
         self.env.reset()
         self.randomise_object_positions()
         self.env.forward()
+        arm = self.env.arm
         pregrasp_pose = self._compute_target_pose("red_cube")
         grasp_pose = pregrasp_pose.copy()
         grasp_pose[2] -= 0.05  # Move down to grasp
@@ -52,12 +53,12 @@ class CubeStackingEnvRunner(BaseEnvRunner):
         self.primitive_seq = PrimitiveSequence(
             name="CubeStackingSequence",
             primitives=[
-                PlanAndExecuteTrajectory(name="Pregrasp", env=self.env, target_pose=pregrasp_pose),
-                PlanAndExecuteTrajectory(name="Grasp", env=self.env, target_pose=grasp_pose),
-                GripperAction(name="OpenGripper", env=self.env, cmd=255.0),
-                PlanAndExecuteTrajectory(name="Lift", env=self.env, target_pose=pregrasp_pose),
-                PlanAndExecuteTrajectory(name="Place", env=self.env, target_pose=place_pose),
-                GripperAction(name="CloseGripper", env=self.env, cmd=0.0),
+                GoToPose(name="Pregrasp", env=self.env, arm=arm, target_pose=pregrasp_pose),
+                GoToPose(name="Grasp", env=self.env, arm=arm, target_pose=grasp_pose),
+                GripperAction(name="OpenGripper", env=self.env, arm=arm, cmd=255.0),
+                GoToPose(name="Lift", env=self.env, arm=arm, target_pose=pregrasp_pose),
+                GoToPose(name="Place", env=self.env, arm=arm, target_pose=place_pose),
+                GripperAction(name="CloseGripper", env=self.env, arm=arm, cmd=0.0),
             ],
         )
         self.primitive_seq.reset()
@@ -114,7 +115,8 @@ if __name__ == "__main__":
     env_config = SingleArmEnvConfig(
         mjcf_path="models/mjcf/cube_stacking.xml",
         object_names=["red_cube", "green_cube"],
-        object_min_distance=0.1,
+        object_min_distance_x=0.1,
+        object_min_distance_y=0.1,
         object_x_bounds=(0, 0.3),
         object_y_bounds=(-0.3, 0.3),
         object_rz_bounds=(0, np.pi / 2),
