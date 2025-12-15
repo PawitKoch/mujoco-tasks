@@ -22,7 +22,7 @@ class CubeStackingEnvRunner(BaseEnvRunner):
         self.primitive_seq: PrimitiveSequence | None = None
 
     def _compute_target_pose(self, target_name: str) -> np.ndarray:
-        """Compute the 6D target pose given a target cube name, with gripper pointing down."""
+        """Compute the target pose given a target cube name, with gripper pointing down."""
         cube_body_id = self.object_body_name2id[target_name]
         cube_pos = self.env.data.xpos[cube_body_id].copy()
         cube_mat = self.env.data.xmat[cube_body_id].reshape(3, 3)

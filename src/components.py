@@ -19,14 +19,10 @@ class Robot:
         self.data = data
 
         # Body & Site IDs
-        self.all_body_ids = self.collect_subtree_body_ids(
-            model, model.body(arm_body_name).id
-        )
+        self.all_body_ids = self.collect_subtree_body_ids(model, model.body(arm_body_name).id)
         self.body_id = model.body(arm_body_name).id
         self.tcp_site_id = model.site(tcp_site_name).id
-        self.gripper_body_ids = self.collect_subtree_body_ids(
-            model, model.body(gripper_body_name).id
-        )
+        self.gripper_body_ids = self.collect_subtree_body_ids(model, model.body(gripper_body_name).id)
 
         # Geom IDs (for collision checking, if needed)
         all_geom_ids = np.array([g for g in range(model.ngeom) if model.geom_bodyid[g] in self.all_body_ids], dtype=int)
@@ -62,7 +58,7 @@ class Robot:
 
     @property
     def tcp_pose(self) -> np.ndarray:
-        """Get current TCP 6D pose [x,y,z, qw,qx,qy,qz]."""
+        """Get current TCP pose [x, y, z, qw, qx, qy, qz]."""
         pos = self.data.site_xpos[self.tcp_site_id]
         mat = self.data.site_xmat[self.tcp_site_id].reshape(3, 3)
         quat = np.zeros(4)

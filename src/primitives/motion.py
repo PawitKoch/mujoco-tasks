@@ -94,7 +94,7 @@ class BaseMotionPrimitive(Primitive):
 
 class GoToPose(BaseMotionPrimitive):
     """
-    Primitive for planning and executing a trajectory to a target 6D pose (position + orientation).
+    Primitive for planning and executing a trajectory to a target pose (position + orientation).
     Uses a planner to generate a joint-space path to the target pose.
     """
 
@@ -201,11 +201,11 @@ class CircularArcMotion(BaseMotionPrimitive):
             target_rot = r_step * r_start
             qx, qy, qz, qw = target_rot.as_quat()
             target_quat = np.array([qw, qx, qy, qz])  # xyzw to wxyz (scipy to mujoco)
-            target_pose_6d = np.concatenate([target_pos, target_quat])
+            target_pose = np.concatenate([target_pos, target_quat])
 
             # Solve IK for joint angles, using previous q as initial guess
             q_sol = self.ik_solver.solve(
-                target_pose_6d, initial_q=prev_q, pos_tol=1e-2, rot_tol=1e-1
+                target_pose, initial_q=prev_q, pos_tol=1e-2, rot_tol=1e-1
             )  # relaxed tolerances
             if q_sol is None:
                 logger.error(f"[{self.name}] IK failed at step {i} of circular arc motion.")

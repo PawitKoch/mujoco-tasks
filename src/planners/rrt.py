@@ -10,7 +10,7 @@ from src.planners import BasePlanner
 class RRTPlanner(BasePlanner):
     """
     Bi-directional RRT (RRT-Connect) Planner.
-    Grows two trees from start and goal configurations until they connect.
+    Grows two trees from start and goal positions until they connect.
     """
 
     class Status(Enum):
@@ -37,7 +37,7 @@ class RRTPlanner(BasePlanner):
         self._ghost_data = mujoco.MjData(model)
 
     def _check_collision(self, q: np.ndarray) -> bool:
-        """Returns True if the configuration q is in collision."""
+        """Returns True if the position q is in collision."""
         # Sync ghost data
         self._ghost_data.qpos[:] = self.data.qpos[:]
         self._ghost_data.qpos[self.arm.joint_ids] = q
@@ -55,32 +55,32 @@ class RRTPlanner(BasePlanner):
             return True
         return False
 
-    def plan(self, start_q: np.ndarray, target_pose_6d: np.ndarray) -> list[np.ndarray] | None:
+    def plan(self, start_q: np.ndarray, target_pose: np.ndarray) -> list[np.ndarray] | None:
         """Plans a path to a Cartesian pose (uses IK internally)."""
         # Solve IK for goal
-        goal_q = self.ik_solver.solve(target_pose_6d)
+        goal_q = self.ik_solver.solve(target_pose)
         if goal_q is None:
-            logger.error("RRT: IK solver failed to find goal configuration.")
+            logger.error("RRT: IK solver failed to find goal joint position.")
             return None
 
         # Delegate to joint planner
         return self.plan_to_qpos(start_q, goal_q)
-    
+
     def plan_to_qpos(self, start_q: np.ndarray, target_q: np.ndarray) -> list[np.ndarray] | None:
         """
-        Plans a path directly to a specific joint configuration.
+        Plans a path directly to a specific joint position.
         """
         if self._check_collision(start_q):
-            logger.warning("RRT: Start configuration is in collision.")
+            logger.warning("RRT: Start joint position is in collision.")
             return None
         if self._check_collision(target_q):
-            logger.warning("RRT: Target joint configuration is in collision.")
+            logger.warning("RRT: Target joint position is in collision.")
             return None
 
         # Initialize Trees
         start_tree = [(start_q, -1)]
         goal_tree = [(target_q, -1)]
-        
+
         # Run RRT Connect
         return self._run_rrt_connect(start_tree, goal_tree)
 
@@ -88,7 +88,7 @@ class RRTPlanner(BasePlanner):
         """Main logic for bi-directional RRT."""
         for _ in range(self.max_iter):
             # Grow start tree
-            q_rand = self._sample_random_config()
+            q_rand = self._sample_random_q()
             status_s, q_new_s = self._extend(start_tree, q_rand)
 
             if status_s != self.Status.TRAPPED:
@@ -98,7 +98,7 @@ class RRTPlanner(BasePlanner):
                     return self._construct_path(start_tree, goal_tree)
 
             # Grow goal tree (Swap roles)
-            q_rand = self._sample_random_config()
+            q_rand = self._sample_random_q()
             status_g, q_new_g = self._extend(goal_tree, q_rand)
 
             if status_g != self.Status.TRAPPED:
@@ -110,7 +110,7 @@ class RRTPlanner(BasePlanner):
         logger.error("RRT: Max iterations reached without finding a path.")
         return None
 
-    def _sample_random_config(self):
+    def _sample_random_q(self):
         """Uniform sampling within joint limits."""
         return np.random.uniform(self.jnt_limits[:, 0], self.jnt_limits[:, 1])
 
@@ -189,7 +189,5 @@ class RRTPlanner(BasePlanner):
             path_from_goal.append(goal_tree[curr_idx][0])
             curr_idx = goal_tree[curr_idx][1]
 
-        # goal_tree was grown FROM goal TO middle.
-        # So path_from_goal is [Middle ... Goal]. We need to append it.
         # Note: The connection point is duplicated, remove one.
         return path_from_start + path_from_goal[1:]

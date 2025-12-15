@@ -44,8 +44,8 @@ class LinearPlanner(BasePlanner):
         t_values = np.linspace(0, 1, num_steps + 1)
         return [start_q + t * diff for t in t_values]
 
-    def plan(self, start_q: np.ndarray, target_pose_6d: np.ndarray) -> list[np.ndarray] | None:
-        goal_q = self.ik_solver.solve(target_pose_6d)
+    def plan(self, start_q: np.ndarray, target_pose: np.ndarray) -> list[np.ndarray] | None:
+        goal_q = self.ik_solver.solve(target_pose)
         if goal_q is None:
             logger.error("LinearPlanner: IK solver failed to find a solution.")
             return None

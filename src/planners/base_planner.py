@@ -16,6 +16,6 @@ class BasePlanner(ABC):
         self.ik_solver = LevenbergMarquardtIKSolver(model, data, arm)
 
     @abstractmethod
-    def plan(self, start_q: np.ndarray, target_pose_6d: np.ndarray) -> list[np.ndarray] | None:
-        """Plan a path from start_q to target_pose_6d. Returns a list of joint waypoints or None on failure."""
+    def plan(self, start_q: np.ndarray, target_pose: np.ndarray) -> list[np.ndarray] | None:
+        """Plan a path from start_q to target_pose. Returns a list of joint waypoints or None on failure."""
         pass
