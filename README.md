@@ -16,7 +16,11 @@ This project uses [uv](https://github.com/astral-sh/uv) for fast Python environm
 ```sh
 uv sync
 uv venv
-uv run -m tasks.cube_stacking # e.g. cube stacking task
+
+# For Linux
+uv run -m tasks.cube_stacking
+# For macOS
+uv run mjpython -m tasks.cube_stacking
 ```
 
 ## Future Improvements
