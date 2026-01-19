@@ -1,4 +1,4 @@
-# Machenta Coding Project
+# MuJoCo Tasks
 
 ## Overview
 
