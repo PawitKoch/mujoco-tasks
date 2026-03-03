@@ -4,6 +4,8 @@ from loguru import logger
 
 import mujoco
 import numpy as np
+import glfw
+import time
 
 
 @dataclass
@@ -84,10 +86,49 @@ class BaseEnvRunner(ABC):
             for body_id in self.object_body_name2id.values()
         ]
 
-    @abstractmethod
-    def run(self):
-        """Run the main execution loop."""
-        pass
+    def run(self, model: mujoco.MjModel, data: mujoco.MjData):
+        """Main execution loop: runs episodes, handles rendering and resets."""
+        episodes = 0
+        reset_requested = False
+
+        def keyboard_callback(keycode):
+            nonlocal reset_requested
+            if keycode == glfw.KEY_R:
+                reset_requested = True
+
+        with mujoco.viewer.launch_passive(model, data, key_callback=keyboard_callback) as viewer:
+            while viewer.is_running():
+                self.setup_episode()
+                sim_time = 0.0
+                last_render_time = 0.0
+                episode_wall_start = time.time()
+                while not self.is_done():
+                    # Step simulation
+                    self.primitive_seq.step()
+                    self.env.step()
+                    sim_time += self.dt
+
+                    # Render
+                    if sim_time - last_render_time >= self.render_dt:
+                        viewer.sync()
+                        last_render_time = sim_time
+
+                    # Sync to real time
+                    wall_time_elapsed = time.time() - episode_wall_start
+                    if sim_time > wall_time_elapsed:
+                        time.sleep(sim_time - wall_time_elapsed)
+
+                    # Check for manual reset
+                    if reset_requested:
+                        logger.info("Manual reset requested. Starting new episode.")
+                        reset_requested = False
+                        break
+
+                episodes += 1
+                if not self.primitive_seq.success:
+                    logger.error("Episode {} failed due to primitive error", episodes)
+                else:
+                    logger.success("Episode {} completed successfully!", episodes)
 
     @abstractmethod
     def setup_episode(self):
