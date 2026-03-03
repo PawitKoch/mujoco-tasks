@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from loguru import logger
 
 import mujoco
+import mujoco.viewer
 import numpy as np
 import glfw
 import time
