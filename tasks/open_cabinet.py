@@ -1,12 +1,8 @@
 """Single arm trying to open a cabinet hinge door."""
 
 from dataclasses import dataclass
-import time
-from loguru import logger
 import mujoco
-import mujoco.viewer
 import numpy as np
-import glfw
 
 from src.envs import BaseEnv, BaseEnvRunner, SingleArmEnv, SingleArmEnvConfig
 from src.primitives import PrimitiveSequence, GoToPose, GripperAction, CircularArcMotion

@@ -1,11 +1,7 @@
 """Single arm stacking two cubes on a table."""
 
-import time
-from loguru import logger
 import mujoco
-import mujoco.viewer
 import numpy as np
-import glfw
 
 from src.envs import BaseEnvRunner, SingleArmEnv, SingleArmEnvConfig
 from src.primitives import GoToPose, PrimitiveSequence, GripperAction

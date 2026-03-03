@@ -1,12 +1,9 @@
 """Dual arm handover of foam brick into red bowl."""
 
-import time
 from dataclasses import dataclass
 from loguru import logger
 import mujoco
-import mujoco.viewer
 import numpy as np
-import glfw
 
 from src.components import Robot
 from src.envs import BaseEnvRunner, DualArmEnv, DualArmEnvConfig
