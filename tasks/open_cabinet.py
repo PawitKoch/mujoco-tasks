@@ -138,4 +138,4 @@ if __name__ == "__main__":
     env = SingleArmEnv(env_config)
 
     runner = OpenCabinetEnvRunner(env, render_dt=0.02)
-    runner.run(env.model, env.data)
+    runner.run()

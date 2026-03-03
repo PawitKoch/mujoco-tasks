@@ -244,4 +244,4 @@ if __name__ == "__main__":
     env = DualArmEnv(env_config)
 
     runner = DualArmHandoverEnvRunner(env, render_dt=0.02)
-    runner.run(env.model, env.data)
+    runner.run()

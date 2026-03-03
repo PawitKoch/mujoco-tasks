@@ -86,7 +86,7 @@ class BaseEnvRunner(ABC):
             for body_id in self.object_body_name2id.values()
         ]
 
-    def run(self, model: mujoco.MjModel, data: mujoco.MjData):
+    def run(self):
         """Main execution loop: runs episodes, handles rendering and resets."""
         episodes = 0
         reset_requested = False
@@ -96,7 +96,7 @@ class BaseEnvRunner(ABC):
             if keycode == glfw.KEY_R:
                 reset_requested = True
 
-        with mujoco.viewer.launch_passive(model, data, key_callback=keyboard_callback) as viewer:
+        with mujoco.viewer.launch_passive(self.env.model, self.env.data, key_callback=keyboard_callback) as viewer:
             while viewer.is_running():
                 self.setup_episode()
                 sim_time = 0.0
